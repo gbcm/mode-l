@@ -1,4 +1,4 @@
-package com.example;
+package com.mode;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
