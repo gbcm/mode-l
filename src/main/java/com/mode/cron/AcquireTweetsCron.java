@@ -2,7 +2,7 @@ package com.mode.cron;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.mode.model.Tweet;
+import com.mode.model.*;
 import com.twitter.hbc.ClientBuilder;
 import com.twitter.hbc.core.Client;
 import com.twitter.hbc.core.Constants;
@@ -15,14 +15,17 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -32,19 +35,24 @@ public class AcquireTweetsCron {
     @Autowired
     Environment environment;
 
-    @GetMapping("/")
-    public @ResponseBody List<String> tweetTest() {
+    @Autowired
+    SampleRepository sampleRepository;
+
+    @Scheduled(fixedDelay=1000 * 60 * 10)
+    public
+    @ResponseBody
+    void tweetTest() {
         BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>(10);
         BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>(10);
 
-        Location.Coordinate swUSBoundingBox = new Location.Coordinate(-126.0,25.6);
-        Location.Coordinate neUSBoundingBox = new Location.Coordinate(-66.3,49.7);
+        Location.Coordinate swUSBoundingBox = new Location.Coordinate(-126.0, 25.6);
+        Location.Coordinate neUSBoundingBox = new Location.Coordinate(-66.3, 49.7);
         Location usBoundingBox = new Location(swUSBoundingBox, neUSBoundingBox);
 
         Client twitterClient = getTwitterClient(msgQueue, eventQueue, usBoundingBox);
 
         int count = 0;
-        List<String> output = new ArrayList<>();
+        List<Tweet> tweets = new ArrayList<>();
         Gson gson = new GsonBuilder().create();
         while (!twitterClient.isDone() && count < 50) {
             String msg = null;
@@ -54,11 +62,30 @@ public class AcquireTweetsCron {
                 e.printStackTrace();
             }
             count++;
-            Tweet tweet = gson.fromJson(msg, Tweet.class);
-            output.add(tweet.getText());
+            tweets.add(gson.fromJson(msg, Tweet.class));
         }
-        return output;
+
+        SentimentRequest sentimentRequest = new SentimentRequest(
+                tweets.toArray(new Tweet[]{}));
+
+
+        RestTemplate restTemplate = new RestTemplateBuilder().build();
+        ResponseEntity<String> raw = restTemplate.exchange(
+                "http://www.sentiment140.com/api/bulkClassifyJson?appid=" +
+                        environment.getProperty("SENTIMENT_EMAIL"),
+                HttpMethod.POST,
+                new HttpEntity<>(gson.toJson(sentimentRequest)),
+                String.class);
+        SentimentResponse sentimentResponse = gson.fromJson(raw.getBody(),SentimentResponse.class);
+        Sample toSave = Sample.builder()
+                .addedOn(new Date())
+                .polarityAverage(sentimentResponse.getAdjustedPolarityAverage())
+                .build();
+        sampleRepository.save(toSave);
+        System.out.println("Sentiment sample saved successfully sir.");
     }
+
+
 
     private Client getTwitterClient(BlockingQueue<String> msgQueue, BlockingQueue<Event> eventQueue, Location boundingBox) {
         Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
