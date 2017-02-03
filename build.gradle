@@ -34,6 +34,7 @@ dependencies {
     compile group: 'postgresql', name: 'postgresql', version: '9.0-801.jdbc4'
 	compile group: 'com.google.code.gson', name: 'gson', version: '1.7.2'
 	compile("com.fasterxml.jackson.core:jackson-databind")
+	compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 	runtime('org.springframework.boot:spring-boot-devtools')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')

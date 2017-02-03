@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js"></script>
+</head>
+<body>
+<canvas id="myChart" width="800" height="800"></canvas>
+<script th:inline="javascript">
+    var ctx = document.getElementById("myChart");
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Scatter Dataset',
+                data: JSON.parse([[${presenter.graphData}]])
+            }]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'linear',
+                    position: 'bottom'
+                }]
+            }
+        }
+    });
+</script>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Sentiment</th>
+    </tr>
+    <object border="1" th:each="sample : ${presenter.samples}" th:remove="tag">
+        <tr>
+            <td th:text="${sample.addedOn}">
+            </td>
+            <td th:text="${sample.polarityAverage}">
+            </td>
+        </tr>
+    </object>
+</table>
+</body>
+</html>

@@ -38,11 +38,11 @@ public class AcquireTweetsCron {
     @Autowired
     SampleRepository sampleRepository;
 
-    @Scheduled(fixedDelay=1000 * 60 * 10)
+//    @Scheduled(fixedDelay=1000 * 60)
     public
     @ResponseBody
     void tweetTest() {
-        BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>(10);
+        BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>(50);
         BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<Event>(10);
 
         Location.Coordinate swUSBoundingBox = new Location.Coordinate(-126.0, 25.6);
@@ -68,7 +68,6 @@ public class AcquireTweetsCron {
         SentimentRequest sentimentRequest = new SentimentRequest(
                 tweets.toArray(new Tweet[]{}));
 
-
         RestTemplate restTemplate = new RestTemplateBuilder().build();
         ResponseEntity<String> raw = restTemplate.exchange(
                 "http://www.sentiment140.com/api/bulkClassifyJson?appid=" +
@@ -82,6 +81,7 @@ public class AcquireTweetsCron {
                 .polarityAverage(sentimentResponse.getAdjustedPolarityAverage())
                 .build();
         sampleRepository.save(toSave);
+        twitterClient.stop();
         System.out.println("Sentiment sample saved successfully sir.");
     }
 

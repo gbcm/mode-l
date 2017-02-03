@@ -1,8 +1,12 @@
 package com.mode.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -31,11 +35,11 @@ public class SentimentResponse {
         return ret;
     }
 
-    public int getAdjustedPolarityAverage() {
-        int ret = 0;
+    public double getAdjustedPolarityAverage() {
+        double ret = 0;
         for (SentimentalTweet st : data) {
             ret += (st.getPolarity() - 2);
         }
-        return Math.floorDiv(ret, data.length);
+        return ret / data.length;
     }
 }

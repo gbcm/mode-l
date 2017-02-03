@@ -1,7 +1,9 @@
 package com.mode.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Generated;
 
 import javax.persistence.Entity;
@@ -12,6 +14,8 @@ import java.util.Date;
 @Data
 @Builder
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 public class Sample {
     @Id
     @GeneratedValue
@@ -19,5 +23,5 @@ public class Sample {
 
     private Date addedOn;
 
-    private int polarityAverage;
+    private Double polarityAverage;
 }
